@@ -1,0 +1,37 @@
+import '../styles/globals.css'
+import { EthereumClient, modalConnectors, walletConnectProvider } from '@web3modal/ethereum'
+import { Web3Modal } from '@web3modal/react'
+import type { AppProps } from 'next/app'
+import { chain, configureChains, createClient, WagmiConfig } from "wagmi";
+import { useRouter } from 'next/router'
+
+// Get your projectId at https://cloud.walletconnect.com
+const projectId: any = process.env.NEXT_PUBLIC_PROJECT_ID;
+const chains = [chain.mainnet, chain.polygon, chain.optimism, chain.arbitrum];
+const { provider } = configureChains(chains, [
+	walletConnectProvider({ projectId }),
+]);
+
+const wagmiClient = createClient({
+	autoConnect: true,
+	connectors: modalConnectors({ appName: "web3Modal", chains }),
+	provider,
+});
+
+export const ethereumClient = new EthereumClient(wagmiClient, chains);
+
+export default function App({ Component, pageProps }: AppProps) {
+  const { pathname } = useRouter()
+  return (
+  <>
+      <WagmiConfig client={wagmiClient}>
+        <Component {...pageProps} />
+      </WagmiConfig>
+
+      {/* Demo purposes only, if custom path is set, we initialize different Web3Modal instance */}
+      {pathname === '/custom' ? null : (
+        <Web3Modal projectId={projectId} ethereumClient={ethereumClient} />
+      )}
+    </>
+  )
+}
